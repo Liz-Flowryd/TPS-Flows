@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowryd</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* PASSWORD OVERLAY */
+        .password-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .password-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .password-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .password-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            padding: 60px 40px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .password-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .password-logo-title {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .password-logo-tagline {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .password-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #1a1a1a, transparent);
+            margin: 32px 0;
+        }
+
+        .password-subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 15px;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .password-form-group {
+            margin-bottom: 24px;
+        }
+
+        .password-form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .password-form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .password-form-input:focus {
+            outline: none;
+            border-color: #06b6d4;
+            background: #000000;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .password-form-input::placeholder {
+            color: #475569;
+        }
+
+        .password-submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
+            border: none;
+            border-radius: 8px;
+            color: #000000;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .password-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+        }
+
+        .password-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .password-error-message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            color: #ef4444;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .password-error-message.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .password-footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .back-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            color: #94a3b8;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            border-color: #06b6d4;
+            color: #06b6d4;
+        }
+
+        .phase-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .phase-tab {
+            padding: 10px 30px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            color: #64748b;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .phase-tab:hover {
+            color: #ffffff;
+        }
+
+        .phase-tab.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* LEFT SIDEBAR - WORKFLOWS */
+        .left-sidebar {
+            width: 240px;
+            background: #000000;
+            border-right: 1px solid #1a1a1a;
+            padding: 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .workflow-item {
+            background: #0a0a0a;
+            border: 2px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-item:hover {
+            border-color: #2a2a2a;
+        }
+
+        .workflow-item.active {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .workflow-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .workflow-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #06b6d4;
+            width: 20px;
+            height: 20px;
+        }
+
+        .workflow-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .workflow-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            flex: 1;
+        }
+
+        .workflow-close {
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .workflow-description {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* CANVAS AREA */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #000000;
+            min-width: 0;
+        }
+
+        .canvas-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(#0a0a0a 1px, transparent 1px),
+                linear-gradient(90deg, #0a0a0a 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .canvas-header {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            z-index: 10;
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .canvas-button {
+            padding: 14px 28px;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .canvas-button svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .canvas-button:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .canvas-button.primary {
+            background: #06b6d4;
+            border: none;
+            color: #000000;
+            border-radius: 0 8px 8px 0;
+            margin-left: 1px;
+        }
+
+        .canvas-button.primary:hover {
+            background: #0891b2;
+        }
+
+        #canvas-participants {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        #canvas-participants > * {
+            pointer-events: auto;
+        }
+
+        .node-card {
+            position: absolute;
+            background: #1a1a1a;
+            border: 2px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 24px;
+            width: 280px;
+            transition: all 0.3s ease;
+            cursor: move;
+        }
+
+        .node-card:hover {
+            border-color: #06b6d4;
+        }
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .node-avatar {
+            width: 40px;
+            height: 40px;
+            background: #06b6d4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .node-info {
+            flex: 1;
+        }
+
+        .node-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #06b6d4;
+        }
+
+        .node-role {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .node-close {
+            color: #64748b;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .node-stats {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .node-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stat-badge {
+            font-size: 11px;
+            color: #22c55e;
+        }
+
+        .add-participant-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 32px;
+            background: #4f46e5;
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .add-participant-btn:hover {
+            background: #4338ca;
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        /* RIGHT SIDEBAR - REQUIRED ROLES */
+        .right-sidebar {
+            width: 320px;
+            background: #000000;
+            border-left: 1px solid #1a1a1a;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-top {
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: #06b6d4;
+            color: #000000;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 900;
+            font-family: Arial, sans-serif;
+        }
+
+        .workflow-name-indicator {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #06b6d4;
+        }
+
+        .readiness-indicator {
+            font-size: 12px;
+            color: #64748b;
+            text-align: right;
+        }
+
+        .role-section {
+            margin-bottom: 24px;
+        }
+
+        .role-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #06b6d4;
+            color: #000000;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .role-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .role-item:hover {
+            border-color: #2a2a2a;
+        }
+
+        .role-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #2a2a2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .role-checkbox.checked {
+            background: #06b6d4;
+            border-color: #06b6d4;
+            position: relative;
+        }
+
+        .role-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000000;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .role-name {
+            flex: 1;
+            font-size: 13px;
+            color: #ffffff;
+        }
+
+        .role-badge {
+            padding: 4px 10px;
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .vp-footnote {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #1a1a1a;
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* BOTTOM STATUS BAR */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 30px;
+            border-top: 1px solid #1a1a1a;
+            background: #000000;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .readiness-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .readiness-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .readiness-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .readiness-percentage {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            min-width: 60px;
+        }
+
+        .readiness-bar {
+            width: 120px;
+            height: 8px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .readiness-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4 0%, #0ea5e9 100%);
+            transition: width 0.3s ease;
+        }
+
+        .deploy-button {
+            padding: 12px 32px;
+            background: #475569;
+            border: none;
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .deploy-button:hover {
+            background: #64748b;
+        }
+
+        .phase-content {
+            display: none;
+        }
+
+        .phase-content.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- PASSWORD OVERLAY -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-grid"></div>
+        <div class="password-container">
+            <div class="password-logo">
+                <div class="password-logo-title">Flowryd</div>
+                <div class="password-logo-tagline">Let's Flow</div>
+            </div>
+
+            <div class="password-divider"></div>
+
+            <div class="password-subtitle">
+                Canton Network orchestration layer for complex multi-party institutional workflows
+            </div>
+
+            <form id="passwordForm">
+                <div class="password-form-group">
+                    <label class="password-form-label" for="passwordInput">Access Code</label>
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        class="password-form-input" 
+                        placeholder="Enter access code"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <button type="submit" class="password-submit-btn">Activate</button>
+
+                <div id="passwordError" class="password-error-message">
+                    Invalid access code. Please try again.
+                </div>
+            </form>
+
+            <div class="password-footer">
+                © 2026 Towler Enterprises Limited (trading as Flowryd)
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <button class="back-button">← Back to Flowryd</button>
+            <div class="phase-tabs">
+                <button class="phase-tab" onclick="switchPhase('discover')">Discover</button>
+                <button class="phase-tab active" onclick="switchPhase('navigate')">Navigate</button>
+                <button class="phase-tab" onclick="switchPhase('activate')">Activate</button>
+            </div>
+            <div style="width: 160px;"></div>
+        </div>
+
+        <!-- NAVIGATE PHASE -->
+        <div id="navigate" class="phase-content active">
+            <div class="main-content">
+                <!-- LEFT SIDEBAR - WORKFLOWS -->
+                <div class="left-sidebar">
+                    <div class="sidebar-header">SELECT WORKFLOW</div>
+                    
+                    <div class="workflow-item">
+                        <div class="workflow-header">
+                            <div class="workflow-icon">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="8" cy="8" r="5"/>
+                                </svg>
+                            </div>
+                            <div class="workflow-title">ETF Create Redeem</div>
+                        </div>
+                        <div class="workflow-description">
+                            Creation/redemption for ETF units. Securities basket for shares.
+                        </div>
+                    </div>
+
+                    <div class="workflow-item active">
+                        <div class="workflow-header">
+                            <div class="workflow-icon">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <!-- Outer circle/donut -->
+                                    <circle cx="8" cy="8" r="5"/>
+                                    <!-- Pinwheel rays -->
+                                    <line x1="8" y1="1" x2="8" y2="3"/>
+                                    <line x1="8" y1="13" x2="8" y2="15"/>
+                                    <line x1="1" y1="8" x2="3" y2="8"/>
+                                    <line x1="13" y1="8" x2="15" y2="8"/>
+                                    <line x1="2.9" y1="2.9" x2="4.3" y2="4.3"/>
+                                    <line x1="11.7" y1="11.7" x2="13.1" y2="13.1"/>
+                                    <line x1="13.1" y1="2.9" x2="11.7" y2="4.3"/>
+                                    <line x1="4.3" y1="11.7" x2="2.9" y2="13.1"/>
+                                </svg>
+                            </div>
+                            <div class="workflow-title">Spread Trading</div>
+                            <div class="workflow-close">×</div>
+                        </div>
+                        <div class="workflow-description">
+                            Professional ETF arbitrage tools for Canton Network. Atomic multi-leg execution with zero collateral requirements.
+                        </div>
+                    </div>
+
+                    <div class="workflow-item">
+                        <div class="workflow-header">
+                            <div class="workflow-icon">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="8" cy="8" r="5"/>
+                                </svg>
+                            </div>
+                            <div class="workflow-title">MMF Tokenised Fund Launch</div>
+                        </div>
+                        <div class="workflow-description">
+                            Real-time subscription and redemption for tokenized MMFs.
+                        </div>
+                    </div>
+
+                    <div class="workflow-item">
+                        <div class="workflow-header">
+                            <div class="workflow-icon">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <!-- Outer circle/donut -->
+                                    <circle cx="8" cy="8" r="5"/>
+                                    <!-- Pinwheel rays -->
+                                    <line x1="8" y1="1" x2="8" y2="3"/>
+                                    <line x1="8" y1="13" x2="8" y2="15"/>
+                                    <line x1="1" y1="8" x2="3" y2="8"/>
+                                    <line x1="13" y1="8" x2="15" y2="8"/>
+                                    <line x1="2.9" y1="2.9" x2="4.3" y2="4.3"/>
+                                    <line x1="11.7" y1="11.7" x2="13.1" y2="13.1"/>
+                                    <line x1="13.1" y1="2.9" x2="11.7" y2="4.3"/>
+                                    <line x1="4.3" y1="11.7" x2="2.9" y2="13.1"/>
+                                </svg>
+                            </div>
+                            <div class="workflow-title">MMF Fund Trading & Collateral</div>
+                        </div>
+                        <div class="workflow-description">
+                            Trading, margin, repo simultaneously. 3-5x velocity.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CANVAS AREA -->
+                <div class="canvas-area">
+                    <div class="canvas-grid"></div>
+                    
+                    <div class="canvas-header">
+                        <button class="canvas-button">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
+                                <circle cx="8" cy="8" r="2"/>
+                            </svg>
+                            View full workflow diagram
+                        </button>
+                        <button class="canvas-button primary">Open in FigJam →</button>
+                    </div>
+
+                    <div id="canvas-participants"></div>
+                    
+                    <button class="add-participant-btn">
+                        + Add Participant
+                    </button>
+                </div>
+
+                <!-- RIGHT SIDEBAR - REQUIRED ROLES -->
+                <div class="right-sidebar">
+                    <div class="sidebar-top">
+                        <div class="sidebar-title">
+                            <span class="info-icon">i</span>
+                            <span>Required Roles</span>
+                        </div>
+                        <div class="workflow-name-indicator">
+                            Spread Trading
+                        </div>
+                        <div class="readiness-indicator">37.5% Ready</div>
+                    </div>
+
+                    <!-- SECTION 1 -->
+                    <div class="role-section">
+                        <div class="role-section-header">
+                            <div class="section-number">1</div>
+                            <div class="section-title">PRIMARY ACTORS</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('Authorized Participant', 'AP', this)">
+                            <div class="role-checkbox"></div>
+                            <div class="role-name">Authorized Participant</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('ETF Issuer', 'EI', this)">
+                            <div class="role-checkbox"></div>
+                            <div class="role-name">ETF Issuer</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('Market Maker', 'MM', this)">
+                            <div class="role-checkbox checked"></div>
+                            <div class="role-name">Market Maker</div>
+                            <div class="role-badge">VP</div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2 -->
+                    <div class="role-section">
+                        <div class="role-section-header">
+                            <div class="section-number">2</div>
+                            <div class="section-title">EXECUTION</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('TT Canton Gateway', 'TT', this)">
+                            <div class="role-checkbox checked"></div>
+                            <div class="role-name">TT Canton Gateway</div>
+                            <div class="role-badge">VP</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('Canton Wallet', 'CW', this)">
+                            <div class="role-checkbox"></div>
+                            <div class="role-name">Canton Wallet</div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3 -->
+                    <div class="role-section">
+                        <div class="role-section-header">
+                            <div class="section-number">3</div>
+                            <div class="section-title">DATA & COMPLIANCE</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('Kaiko Oracle', 'KO', this)">
+                            <div class="role-checkbox checked"></div>
+                            <div class="role-name">Kaiko Oracle</div>
+                            <div class="role-badge">VP</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('C7 Trust', 'C7', this)">
+                            <div class="role-checkbox"></div>
+                            <div class="role-name">C7 Trust</div>
+                        </div>
+                        <div class="role-item" onclick="addToCanvas('Spot Exchange', 'SE', this)">
+                            <div class="role-checkbox"></div>
+                            <div class="role-name">Spot Exchange</div>
+                        </div>
+                    </div>
+                    
+                    <!-- VP FOOTNOTE -->
+                    <div class="vp-footnote">
+                        VP: Verified parties from Discover
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM STATUS BAR -->
+            <div class="bottom-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <span class="status-label">ASSETS</span>
+                        <span class="status-value">$1.2B</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">VALIDATORS</span>
+                        <span class="status-value" id="validator-count">3</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">CENTRALITY</span>
+                        <span class="status-value">37</span>
+                    </div>
+                </div>
+
+                <div class="readiness-section">
+                    <div class="readiness-info">
+                        <span class="readiness-label">READINESS</span>
+                        <span class="readiness-percentage" id="readiness-percent">37.5%</span>
+                    </div>
+                    <div class="readiness-bar">
+                        <div class="readiness-fill" id="readiness-fill" style="width: 37.5%"></div>
+                    </div>
+                    <button class="deploy-button">Deploy Flow →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DISCOVER PHASE -->
+        <div id="discover" class="phase-content">
+            <div class="main-content">
+                <div class="canvas-area">
+                    <div class="canvas-grid"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; max-width: 600px;">
+                        <div style="font-size: 64px; margin-bottom: 20px; color: #06b6d4;">D</div>
+                        <div style="font-size: 28px; font-weight: 700; margin-bottom: 16px;">Discover Phase</div>
+                        <div style="font-size: 16px; color: #94a3b8; line-height: 1.6;">
+                            Match institutional parties to workflow roles based on capabilities and strategic fit.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIVATE PHASE -->
+        <div id="activate" class="phase-content">
+            <div class="main-content">
+                <div class="canvas-area">
+                    <div class="canvas-grid"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; max-width: 600px;">
+                        <div style="font-size: 64px; margin-bottom: 20px; color: #06b6d4;">A</div>
+                        <div style="font-size: 28px; font-weight: 700; margin-bottom: 16px;">Activate Phase</div>
+                        <div style="font-size: 16px; color: #94a3b8; line-height: 1.6;">
+                            Deploy workflow on Canton Network. Atomic execution ensures all perform together.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let checkedRoles = 3;
+        const totalRoles = 8;
+        const addedParticipants = new Set(['Market Maker', 'TT Canton Gateway', 'Kaiko Oracle']);
+
+        function addToCanvas(name, initials, element) {
+            const checkbox = element.querySelector('.role-checkbox');
+            const hasBadge = element.querySelector('.role-badge');
+            
+            if (hasBadge && checkbox.classList.contains('checked')) {
+                return;
+            }
+            
+            if (checkbox.classList.contains('checked')) {
+                checkbox.classList.remove('checked');
+                checkedRoles--;
+                removeFromCanvas(name);
+            } else {
+                checkbox.classList.add('checked');
+                checkedRoles++;
+                addParticipantCard(name, initials, hasBadge !== null);
+            }
+            
+            updateReadiness();
+        }
+
+        function addParticipantCard(name, initials, isYourNode) {
+            if (addedParticipants.has(name) && !isYourNode) return;
+            
+            const canvas = document.getElementById('canvas-participants');
+            if (!canvas) return;
+            
+            const card = document.createElement('div');
+            card.className = 'node-card';
+            card.setAttribute('data-participant', name);
+            
+            const cardCount = canvas.querySelectorAll('.node-card').length;
+            const positions = [
+                { top: '25%', left: '30%' },
+                { top: '25%', left: '70%' },
+                { top: '50%', left: '30%' },
+                { top: '50%', left: '70%' },
+                { top: '75%', left: '50%' }
+            ];
+            
+            const pos = positions[cardCount % positions.length];
+            card.style.top = pos.top;
+            card.style.left = pos.left;
+            card.style.transform = 'translate(-50%, -50%)';
+            
+            card.innerHTML = `
+                <div class="node-header">
+                    <div class="node-avatar">${initials}</div>
+                    <div class="node-info">
+                        <div class="node-name">${name}</div>
+                        <div class="node-role">PARTICIPANT</div>
+                    </div>
+                    <div class="node-close" onclick="removeParticipant('${name}')">${isYourNode ? '' : '×'}</div>
+                </div>
+                <div class="node-stats">
+                    <div class="node-stat">
+                        <div class="stat-label">ASSETS</div>
+                        <div class="stat-value">$1.2B</div>
+                    </div>
+                    <div class="node-stat">
+                        <div class="stat-label">VALIDATION</div>
+                        <div class="stat-badge">● Active</div>
+                    </div>
+                </div>
+            `;
+            
+            canvas.appendChild(card);
+            addedParticipants.add(name);
+        }
+
+        function removeParticipant(name) {
+            const roleItems = document.querySelectorAll('.role-item');
+            roleItems.forEach(item => {
+                const roleName = item.querySelector('.role-name');
+                if (roleName && roleName.textContent.trim() === name) {
+                    const hasBadge = item.querySelector('.role-badge');
+                    if (!hasBadge) {
+                        const checkbox = item.querySelector('.role-checkbox');
+                        checkbox.classList.remove('checked');
+                        checkedRoles--;
+                    }
+                }
+            });
+            
+            removeFromCanvas(name);
+            updateReadiness();
+        }
+
+        function removeFromCanvas(name) {
+            const canvas = document.getElementById('canvas-participants');
+            if (!canvas) return;
+            
+            const cards = canvas.querySelectorAll('.node-card');
+            cards.forEach(card => {
+                if (card.getAttribute('data-participant') === name) {
+                    // Check if this participant has VP badge in the sidebar
+                    const roleItems = document.querySelectorAll('.role-item');
+                    let hasVPBadge = false;
+                    roleItems.forEach(item => {
+                        const roleName = item.querySelector('.role-name');
+                        if (roleName && roleName.textContent.trim() === name) {
+                            const badge = item.querySelector('.role-badge');
+                            if (badge && badge.textContent.trim() === 'VP') {
+                                hasVPBadge = true;
+                            }
+                        }
+                    });
+                    
+                    if (!hasVPBadge) {
+                        card.remove();
+                        addedParticipants.delete(name);
+                    }
+                }
+            });
+        }
+
+        function updateReadiness() {
+            const percentage = (checkedRoles / totalRoles * 100).toFixed(1);
+            
+            const readinessPercent = document.getElementById('readiness-percent');
+            const readinessFill = document.getElementById('readiness-fill');
+            const validatorCount = document.getElementById('validator-count');
+            
+            if (readinessPercent) readinessPercent.textContent = percentage + '%';
+            if (readinessFill) readinessFill.style.width = percentage + '%';
+            if (validatorCount) validatorCount.textContent = checkedRoles;
+        }
+
+        function switchPhase(phase) {
+            document.querySelectorAll('.phase-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.phase-content').forEach(content => content.classList.remove('active'));
+            const phaseElement = document.getElementById(phase);
+            if (phaseElement) phaseElement.classList.add('active');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password handling
+            const correctPassword = 'TPS-LetsFlow!';
+            const passwordOverlay = document.getElementById('passwordOverlay');
+            const passwordForm = document.getElementById('passwordForm');
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const passwordSubmitBtn = document.querySelector('.password-submit-btn');
+
+            function handlePasswordSubmit(e) {
+                if (e) e.preventDefault();
+                
+                const enteredPassword = passwordInput.value;
+                
+                if (enteredPassword === correctPassword) {
+                    // Success - hide overlay
+                    passwordSubmitBtn.textContent = 'ACTIVATING...';
+                    passwordSubmitBtn.style.opacity = '0.7';
+                    
+                    setTimeout(() => {
+                        passwordOverlay.classList.add('hidden');
+                    }, 500);
+                } else {
+                    // Error - show message
+                    passwordError.classList.add('show');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    
+                    setTimeout(() => {
+                        passwordError.classList.remove('show');
+                    }, 3000);
+                }
+            }
+
+            passwordForm.addEventListener('submit', handlePasswordSubmit);
+
+            // Clear error on input
+            passwordInput.addEventListener('input', function() {
+                passwordError.classList.remove('show');
+            });
+
+            // Auto-focus password input
+            passwordInput.focus();
+
+            // Initialize app participants after delay
+            setTimeout(function() {
+                addParticipantCard('Market Maker', 'MM', true);
+                addParticipantCard('TT Canton Gateway', 'TT', true);
+                addParticipantCard('Kaiko Oracle', 'KO', true);
+            }, 100);
+        });
+    </script>
+</body>
+</html>
