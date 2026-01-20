@@ -981,9 +981,9 @@
                             <div class="section-number">2</div>
                             <div class="section-title">EXECUTION</div>
                         </div>
-                        <div class="role-item" onclick="addToCanvas('TT Canton Gateway', 'TT', this)">
+                        <div class="role-item" onclick="addToCanvas('Trading Gateway', 'TG', this)">
                             <div class="role-checkbox checked"></div>
-                            <div class="role-name">TT Canton Gateway</div>
+                            <div class="role-name">Trading Gateway</div>
                             <div class="role-badge">VP</div>
                         </div>
                         <div class="role-item" onclick="addToCanvas('Canton Wallet', 'CW', this)">
@@ -1086,7 +1086,7 @@
     <script>
         let checkedRoles = 3;
         const totalRoles = 8;
-        const addedParticipants = new Set(['Market Maker', 'TT Canton Gateway', 'Kaiko Oracle']);
+        const addedParticipants = new Set(['Market Maker', 'Trading Gateway', 'Kaiko Oracle']);
 
         function addToCanvas(name, initials, element) {
             const checkbox = element.querySelector('.role-checkbox');
@@ -1273,7 +1273,7 @@
             // Initialize app participants after delay
             setTimeout(function() {
                 addParticipantCard('Market Maker', 'MM', true);
-                addParticipantCard('TT Canton Gateway', 'TT', true);
+                addParticipantCard('Trading Gateway', 'TG', true);
                 addParticipantCard('Kaiko Oracle', 'KO', true);
             }, 100);
         });
